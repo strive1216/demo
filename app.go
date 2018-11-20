@@ -5,6 +5,7 @@ import (
 	"demo/router"
 	"fmt"
 	"github.com/braintree/manners"
+	"github.com/gin-gonic/gin"
 	"sync"
 	"time"
 )
@@ -14,7 +15,7 @@ func main() {
 	go ialiyun()
 	fmt.Println("mian结束", time.Now().UnixNano())
 
-	//gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.ReleaseMode)
 	router := router.InitRouter()
 	//router.Run("0.0.0.0:8888")
 	manners.ListenAndServe("0.0.0.0:8888", router)

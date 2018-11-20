@@ -95,7 +95,9 @@ func (defaultClient DefaultClient) GetResponse(path string, clinetInfo interface
 	clientInfoJson, _ := json.Marshal(clinetInfo)
 	bizDataJson, _ := json.Marshal(bizData)
 
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: time.Duration(20 * time.Second),
+	}
 	req, err := http.NewRequest(method, host+path+"?clientInfo="+url.QueryEscape(string(clientInfoJson)), strings.NewReader(string(bizDataJson)))
 
 	if err != nil {
@@ -103,9 +105,10 @@ func (defaultClient DefaultClient) GetResponse(path string, clinetInfo interface
 		return []byte(ErrorResult(err))
 	} else {
 		addRequestHeader(string(bizDataJson), req, string(clientInfoJson), path, accessKeyId, accessKeySecret)
-
-		response, _ := client.Do(req)
-
+		response, err_ := client.Do(req)
+		if err_ != nil {
+			return []byte(ErrorResult(err_))
+		}
 		defer response.Body.Close()
 
 		body, err := ioutil.ReadAll(response.Body)

@@ -62,8 +62,12 @@ func InitRouter() *gin.Engine {
 			fmt.Println(string(data))
 			m := aliyun.TextResult{}
 			json.Unmarshal(data, &m)
+			var aa bool = false
+			if m.Code == 200 {
+				aa = true
+			}
 			c.SecureJSON(http.StatusOK, gin.H{
-				"success": true,
+				"success": aa,
 				"data":    m.Data,
 				"code":    m.Code,
 				"msg":     m.Msg,
@@ -74,8 +78,12 @@ func InitRouter() *gin.Engine {
 			data := aliyun.InspectImg([]string{img})
 			m := aliyun.ImgResult{}
 			json.Unmarshal(data, &m)
+			var aa bool = false
+			if m.Code == 200 {
+				aa = true
+			}
 			c.SecureJSON(http.StatusOK, gin.H{
-				"success": true,
+				"success": aa,
 				"data":    m.Data,
 				"code":    m.Code,
 				"msg":     m.Msg,
