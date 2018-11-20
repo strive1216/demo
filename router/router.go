@@ -70,8 +70,16 @@ func InitRouter() *gin.Engine {
 			})
 		})
 		r3.POST("/img", func(c *gin.Context) {
-			img := c.Request.PostForm.Get("img")
-			c.String(http.StatusOK, string(aliyun.InspectImg([]string{img})))
+			img := c.PostForm("img")
+			data := aliyun.InspectImg([]string{img})
+			m := aliyun.ImgResult{}
+			json.Unmarshal(data, &m)
+			c.SecureJSON(http.StatusOK, gin.H{
+				"success": true,
+				"data":    m.Data,
+				"code":    m.Code,
+				"msg":     m.Msg,
+			})
 		})
 	}
 	return router
