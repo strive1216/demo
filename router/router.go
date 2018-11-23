@@ -2,12 +2,10 @@ package router
 
 import (
 	"demo/controllers/account"
+	"demo/controllers/aliyun"
 	"demo/controllers/index"
 	"demo/controllers/note"
-	"demo/lib/aliyun"
 	"demo/middleware"
-	"encoding/json"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -52,43 +50,9 @@ func InitRouter() *gin.Engine {
 	}
 	r3 := router.Group("/aliyun").Use(middleware.SetHeaderJSON())
 	{
-		r3.POST("/text", func(c *gin.Context) {
-			//buf := make([]byte, 1024)
-			//n, _ := c.Request.Body.Read(buf)
-			//fmt.Println(string(buf[0:n]))
-
-			text := c.PostForm("aa")
-			data := aliyun.InspectText(text, 4000)
-			fmt.Println(string(data))
-			m := aliyun.TextResult{}
-			json.Unmarshal(data, &m)
-			var aa bool = false
-			if m.Code == 200 {
-				aa = true
-			}
-			c.SecureJSON(http.StatusOK, gin.H{
-				"success": aa,
-				"data":    m.Data,
-				"code":    m.Code,
-				"msg":     m.Msg,
-			})
-		})
-		r3.POST("/img", func(c *gin.Context) {
-			img := c.PostForm("img")
-			data := aliyun.InspectImg([]string{img})
-			m := aliyun.ImgResult{}
-			json.Unmarshal(data, &m)
-			var aa bool = false
-			if m.Code == 200 {
-				aa = true
-			}
-			c.SecureJSON(http.StatusOK, gin.H{
-				"success": aa,
-				"data":    m.Data,
-				"code":    m.Code,
-				"msg":     m.Msg,
-			})
-		})
+		r3.POST("/text", aliyun.InspectText)
+		r3.POST("/img", aliyun.InspectImg)
+		r3.POST("/all", aliyun.Inspect)
 	}
 	return router
 }
