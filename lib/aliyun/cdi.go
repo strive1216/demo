@@ -1,7 +1,6 @@
 package aliyun
 
 import (
-	"demo/lib"
 	"demo/lib/uuid"
 )
 
@@ -11,28 +10,17 @@ const accessKeySecret string = "t26Dr6xqZDOhBd0HvbXvl0ijfSEj5D"
 var profile Profile = Profile{AccessKeyId: accessKeyId, AccessKeySecret: accessKeySecret}
 var Client IAliYunClient = DefaultClient{Profile: profile}
 
-func InspectText(doc string, n int) []byte {
-	slice1 := make([]string, 0)
-	ll := doc
-	for n < len([]rune(ll)) {
-		rs := []rune(ll)
-		m := lib.Substr2(ll, 0, n)
-		slice1 = append(slice1, m)
-		ll = lib.Substr2(string(rs), n, len(rs))
-	}
-	slice1 = append(slice1, ll)
-	data := text(slice1)
+func InspectText(doc []string, bizType string, scenes []string) []byte {
+	data := text(doc, bizType, scenes)
 	return data
 }
-func InspectImg(urls []string) []byte {
-	return img(urls)
+func InspectImg(urls []string, bizType string, scenes []string) []byte {
+	return img(urls, bizType, scenes)
 }
 
-func text(docs []string) []byte {
+func text(docs []string, bizType string, scenes []string) []byte {
 	path := "/green/text/scan"
 	clientInfo := ClinetInfo{Ip: "127.0.0.1"}
-	bizType := "Green"
-	scenes := []string{"antispam"}
 	tasks := make([]TextTask, 0)
 	for _, value := range docs {
 		task := TextTask{
@@ -49,14 +37,10 @@ func text(docs []string) []byte {
 	return Client.GetResponse(path, clientInfo, bizData)
 }
 
-func img(urls []string) []byte {
+func img(urls []string, bizType string, scenes []string) []byte {
 	path := "/green/image/scan"
 
 	clientInfo := ClinetInfo{Ip: "127.0.0.1"}
-
-	// 构造请求数据
-	bizType := "Green"
-	scenes := []string{"porn"}
 
 	tasks := make([]ImgTask, 0)
 	for _, value := range urls {
