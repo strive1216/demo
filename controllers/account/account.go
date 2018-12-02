@@ -1,26 +1,29 @@
 package account
 
 import (
+	"demo/middleware/JWT"
 	"demo/models/account"
 	"encoding/json"
 	"fmt"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo/bson"
 	"net/http"
+	"strings"
 	"time"
 )
 
 type user = account.Account
 
 var (
-	Account =  account.Account{}
+	Account = account.Account{}
 )
 
 // func1: 处理最基本的GET
-func Func1(c   *gin.Context) {
+func Func1(c *gin.Context) {
 	name := c.DefaultQuery("name", "中国")
 	Id := c.Query("Id")
-	
+
 	// 回复一个200OK,在client的http-get的resp的body中获取数据
 	c.String(http.StatusOK, "hello %v %s", name, Id)
 }
@@ -76,7 +79,19 @@ func Login(c *gin.Context) {
 	}
 	exist := Account.IsExist(bson.M{"username": userInfo.Username})
 	if exist {
-		c.JSON(http.StatusOK, gin.H{"code": 200, "data": userInfo})
+		var info = JWT.CustomClaims{
+			ID:    456456,
+			Name:  userInfo.Username,
+			Email: userInfo.Phone,
+			StandardClaims: jwt.StandardClaims{
+				ExpiresAt: 1500000, //time.Now().Add(24 * time.Hour).Unix()
+				Issuer:    "test",
+			},
+		}
+		JWT.SetSignKey("asdhjkh")
+		var jwttoken, _ = JWT.NewJWT().CreateToken(info)
+
+		c.JSON(http.StatusOK, gin.H{"code": 200, "data": userInfo, "token": jwttoken})
 	} else {
 		c.JSON(http.StatusOK, gin.H{"code": 403, "data": userInfo})
 	}
@@ -115,7 +130,15 @@ func Info(c *gin.Context) {
 	id := c.Param("id")
 	exist, err := Account.FindById(id)
 	if err == nil {
-		c.JSON(http.StatusOK, gin.H{"code": 200, "data": exist})
+		for k, v := range c.Request.Header {
+			fmt.Println(k, v)
+		}
+		var ak = c.GetHeader("Authorization")
+		if s := strings.Split(ak, " "); len(s) == 2 {
+			ak = s[1]
+		}
+		var a, _ = JWT.NewJWT().ParseToken(ak)
+		c.JSON(http.StatusOK, gin.H{"code": 200, "data": exist, "val": a})
 	} else {
 		c.JSON(http.StatusOK, gin.H{"code": 404, "data": ""})
 	}

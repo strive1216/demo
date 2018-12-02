@@ -1,7 +1,7 @@
 package index
 
 import (
-	jwtauth "demo/middleware"
+	jwtauth "demo/middleware/JWT"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"net/http"

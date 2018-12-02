@@ -1,18 +1,19 @@
-package middleware
+package JWT
 
 import (
 	"errors"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
 	"time"
-	"github.com/dgrijalva/jwt-go"
 )
+
 func JWTAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.DefaultQuery("token", "")
 		if token == "" {
-			token = c.Request.Header.Get("Authorization")
+			token = c.GetHeader("Authorization")
 			if s := strings.Split(token, " "); len(s) == 2 {
 				token = s[1]
 			}
@@ -24,31 +25,39 @@ func JWTAuth() gin.HandlerFunc {
 				if token, err = j.RefreshToken(token); err == nil {
 					c.Header("Authorization", "Bear "+token)
 					c.JSON(http.StatusOK, gin.H{"error": 0, "message": "refresh token", "token": token})
+					c.Abort()
 					return
 				}
 			}
 			c.JSON(http.StatusUnauthorized, gin.H{"error": 1, "message": err.Error()})
+			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
+
 		c.Set("claims", claims)
+		c.Next()
 	}
 }
+
 type JWT struct {
 	SigningKey []byte
 }
+
 var (
-	TokenExpired error = errors.New("Token is expired")
-	TokenNotValidYet error = errors.New("Token not active yet")
-	TokenMalformed error = errors.New("That's not even a token")
-	TokenInvalid error = errors.New("Couldn't handle this token:")
-	SignKey string = "test"
+	TokenExpired     error  = errors.New("Token is expired")
+	TokenNotValidYet error  = errors.New("Token not active yet")
+	TokenMalformed   error  = errors.New("That's not even a token")
+	TokenInvalid     error  = errors.New("Couldn't handle this token:")
+	SignKey          string = "test"
 )
+
 type CustomClaims struct {
-	ID int `json:"id"`
-	Name string `json:"name"`
+	ID    int    `json:"id"`
+	Name  string `json:"name"`
 	Email string `json:"email"`
 	jwt.StandardClaims
 }
+
 func NewJWT() *JWT {
 	return &JWT{
 		[]byte(GetSignKey()),

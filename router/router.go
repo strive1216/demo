@@ -6,6 +6,7 @@ import (
 	"demo/controllers/index"
 	"demo/controllers/note"
 	"demo/middleware"
+	"demo/middleware/JWT"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -29,7 +30,7 @@ func InitRouter() *gin.Engine {
 		r1.POST("/login", account.Login)
 		r1.GET("/list", account.ListAccount)
 		r1.POST("/reg", account.Register)
-		r1.GET("/info/:id", account.Info)
+		r1.GET("/info/:id", JWT.JWTAuth(), account.Info)
 		r1.DELETE("/rem/:id", account.Remove)
 		r1.PUT("/update/:id", account.Update)
 		r1.GET("/user/:name/*action", func(c *gin.Context) {
