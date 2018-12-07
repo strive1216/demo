@@ -12,8 +12,8 @@ type Connection struct {
 	inChan    chan []byte
 	outChan   chan []byte
 	closeChan chan []byte
-	mutex     sync.Mutex
-	isClosed  bool
+	mutex     sync.Mutex // 对closeChan关闭上锁
+	isClosed  bool       // 防止closeChan被关闭多次
 }
 
 //InitConnection 创建
@@ -23,6 +23,8 @@ func InitConnection(wsConn *websocket.Conn) (conn *Connection, err error) {
 		inChan:    make(chan []byte, 1000),
 		outChan:   make(chan []byte, 1000),
 		closeChan: make(chan []byte, 1),
+		mutex:     sync.Mutex{},
+		isClosed:  false,
 	}
 	//启动读协程
 	go conn.readLoop()
@@ -82,8 +84,6 @@ func (conn *Connection) readLoop() {
 		case <-conn.closeChan:
 			goto ERR
 		}
-
-		conn.inChan <- data
 	}
 ERR:
 	conn.Close()
