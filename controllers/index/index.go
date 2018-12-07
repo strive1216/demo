@@ -1,10 +1,14 @@
 package index
 
 import (
+	"demo/lib/ws"
 	jwtauth "demo/middleware/JWT"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"net/http"
+	"time"
 )
 
 // func1: 处理最基本的GET
@@ -46,4 +50,54 @@ func Jwt(c *gin.Context) {
 	} else {
 		c.JSON(http.StatusOK, res)
 	}
+}
+
+var (
+	upgrader = websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
+)
+
+func Ws(c *gin.Context) {
+
+	var (
+		wsConn *websocket.Conn
+		err    error
+		data   []byte
+		conn   *ws.Connection
+	)
+
+	if wsConn, err = upgrader.Upgrade(c.Writer, c.Request, nil); err != nil {
+		return
+	}
+	if conn, err = ws.InitConnection(wsConn); err != nil {
+		goto ERR
+	}
+
+	go func() {
+		var err error
+		for {
+			if err = conn.WriteMessage([]byte("心跳包")); err != nil {
+				return
+			}
+			time.Sleep(1 * time.Second)
+		}
+	}()
+
+	for {
+		if data, err = conn.ReadMessage(); err != nil {
+			goto ERR
+		} else {
+			fmt.Println("收到：" + string(data))
+			if err = conn.WriteMessage([]byte("回复" + string(data))); err != nil {
+				goto ERR
+			}
+		}
+
+	}
+
+ERR:
+	conn.Close()
 }

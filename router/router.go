@@ -13,10 +13,14 @@ import (
 
 func InitRouter() *gin.Engine {
 	router := gin.Default()
-	router.Static("/resources", "./resources")
-	router.StaticFile("/favicon.ico", "./resources/favicon.ico")
+	router.Static("/static", "resources")
+
+	//向服务器展示文件列表
+	router.StaticFS("/resources", http.Dir("resources"))
+
+	router.StaticFile("/favicon.ico", "resources/favicon.ico")
+
 	router.GET("/", index.Index)
-	//
 	router.GET("/jwt", index.Jwt)
 	router.GET("/baidu", func(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "https://www.baidu.com")
@@ -55,5 +59,6 @@ func InitRouter() *gin.Engine {
 		r3.POST("/img", aliyun.InspectImg)
 		r3.POST("/all", aliyun.Inspect)
 	}
+	router.GET("/ws", index.Ws)
 	return router
 }
