@@ -6,10 +6,24 @@ import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/json"
 	"github.com/gorilla/websocket"
 	"net/http"
 	"time"
 )
+
+type wsinfo struct {
+	wsConn *websocket.Conn
+	conn   *ws.Connection
+}
+
+type msg struct {
+	Id      string
+	Type    string
+	Content string
+}
+
+var wslist map[string]wsinfo = make(map[string]wsinfo)
 
 // func1: 处理最基本的GET
 func Index(c *gin.Context) {
@@ -61,12 +75,16 @@ var (
 )
 
 func Ws(c *gin.Context) {
-
+	id := c.Query("id")
+	if id == "" {
+		return
+	}
 	var (
 		wsConn *websocket.Conn
 		err    error
 		data   []byte
 		conn   *ws.Connection
+		info   *wsinfo
 	)
 
 	if wsConn, err = upgrader.Upgrade(c.Writer, c.Request, nil); err != nil {
@@ -75,6 +93,11 @@ func Ws(c *gin.Context) {
 	if conn, err = ws.InitConnection(wsConn); err != nil {
 		goto ERR
 	}
+	info = &wsinfo{
+		wsConn: wsConn,
+		conn:   conn,
+	}
+	wslist[id] = *info
 
 	go func() {
 		var err error
@@ -91,13 +114,30 @@ func Ws(c *gin.Context) {
 			goto ERR
 		} else {
 			fmt.Println("收到：" + string(data))
-			if err = conn.WriteMessage([]byte("回复" + string(data))); err != nil {
-				goto ERR
+			for wsid := range wslist {
+				var c []byte = nil
+				if id != wsid {
+					mg := &msg{
+						Id:      id,
+						Type:    "text",
+						Content: id + `:发送` + string(data),
+					}
+					c, _ = json.Marshal(mg)
+				} else {
+					mg := &msg{
+						Id:      "server",
+						Type:    "text",
+						Content: `已收到` + string(data),
+					}
+					c, _ = json.Marshal(mg)
+				}
+				if err = wslist[wsid].conn.WriteMessage(c); err != nil {
+					goto ERR
+				}
 			}
 		}
-
 	}
-
 ERR:
-	conn.Close()
+	delete(wslist, id)
+	wslist[id].conn.Close()
 }

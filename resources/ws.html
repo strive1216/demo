@@ -3,6 +3,12 @@
 <head>
     <title>Chat Example</title>
     <script type="text/javascript">
+        getUrlParam = function (name) {
+            var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+            var r = window.location.search.substr(1).match(reg);
+            if (r != null) return unescape(r[2]);
+            return null;
+        }
         window.onload = function () {
             var conn;
             var msg = document.getElementById("msg");
@@ -26,7 +32,7 @@
                 return false;
             };
             if (window["WebSocket"]) {
-                conn = new WebSocket("ws://" + document.location.host+ "/ws");
+                conn = new WebSocket("ws://" + document.location.host+ "/ws?id="+getUrlParam("id"));
                 conn.onclose = function (evt) {
                     var item = document.createElement("div");
                     item.innerHTML = "<b>Connection closed.</b>";
