@@ -3,10 +3,10 @@ package index
 import (
 	"demo/lib/ws"
 	jwtauth "demo/middleware/JWT"
+	"encoding/json"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/json"
 	"github.com/gorilla/websocket"
 	"net/http"
 	"time"
